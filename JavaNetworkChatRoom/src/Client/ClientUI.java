@@ -2,200 +2,208 @@ package client;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
+import java.io.*;
+import java.net.*;
 
 public class ClientUI extends JFrame {
+    private JPanel cardPanel;
     private CardLayout cardLayout;
-    private JPanel mainPanel;
     
     private JTextField ipField;
     private JTextField portField;
-    private JTextField usernameField;
-    private JButton loginBtn;
-    private JButton exitBtn;
-
+    private JTextField userField;
+    private JButton loginButton;
+    private JButton exitAppButton;
+    
     private JTextArea chatArea;
+    private DefaultListModel<String> usersListModel;
+    private JList<String> activeUsersList;
     private JTextField messageField;
-    private JButton sendBtn;
-    private JButton leaveChatBtn;
-    private DefaultListModel<String> usersModel;
-    private JList<String> usersList;
-
+    private JButton sendButton;
+    private JButton leaveButton;
+    
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
     private String username;
     
-    private final Color pinkBackground = new Color(255, 220, 230);
+    private volatile boolean intentionalLogout = false;
+    
+    private Color pinkHue = new Color(255, 192, 203);
+    private Color redText = Color.RED;
 
     public ClientUI() {
-        setTitle("Chat Client");
-        setSize(600, 400);
+        setTitle("Network Chat Client");
+        setSize(700, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
+        setLocationRelativeTo(null);
+        
         cardLayout = new CardLayout();
-        mainPanel = new JPanel(cardLayout);
-        mainPanel.setBackground(pinkBackground);
-
+        cardPanel = new JPanel(cardLayout);
+        
         initLoginPanel();
         initChatPanel();
-
-        add(mainPanel);
-        cardLayout.show(mainPanel, "LOGIN");
-        setVisible(true);
+        
+        add(cardPanel);
+        cardLayout.show(cardPanel, "Login");
     }
 
     private void initLoginPanel() {
         JPanel loginPanel = new JPanel(new GridBagLayout());
-        loginPanel.setBackground(pinkBackground);
+        loginPanel.setBackground(pinkHue);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
+        gbc.insets = new Insets(10, 10, 10, 10);
+        
+        JLabel titleLabel = new JLabel("Join Chat Room");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setForeground(redText);
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+        loginPanel.add(titleLabel, gbc);
+        
+        gbc.gridwidth = 1;
+        gbc.gridy = 1; gbc.gridx = 0;
+        JLabel ipLabel = new JLabel("Server IP:");
+        ipLabel.setForeground(redText);
+        loginPanel.add(ipLabel, gbc);
+        
+        gbc.gridx = 1;
         ipField = new JTextField("localhost", 15);
-        portField = new JTextField("5000", 5);
-        usernameField = new JTextField(15);
+        loginPanel.add(ipField, gbc);
         
-        loginBtn = new JButton("Login");
-        loginBtn.setForeground(Color.RED);
+        gbc.gridy = 2; gbc.gridx = 0;
+        JLabel portLabel = new JLabel("Port:");
+        portLabel.setForeground(redText);
+        loginPanel.add(portLabel, gbc);
         
-        exitBtn = new JButton("Exit");
-        exitBtn.setForeground(Color.RED);
-
-        gbc.gridx = 0; gbc.gridy = 0; loginPanel.add(new JLabel("Server IP:"), gbc);
-        gbc.gridx = 1; loginPanel.add(ipField, gbc);
+        gbc.gridx = 1;
+        portField = new JTextField("5000", 15);
+        loginPanel.add(portField, gbc);
         
-        gbc.gridx = 0; gbc.gridy = 1; loginPanel.add(new JLabel("Port:"), gbc);
-        gbc.gridx = 1; loginPanel.add(portField, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 2; loginPanel.add(new JLabel("Username:"), gbc);
-        gbc.gridx = 1; loginPanel.add(usernameField, gbc);
-
-        JPanel btnPanel = new JPanel(new GridLayout(1, 2, 5, 0));
-        btnPanel.setBackground(pinkBackground);
-        btnPanel.add(loginBtn);
-        btnPanel.add(exitBtn);
-
-        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2;
-        loginPanel.add(btnPanel, gbc);
-
-        loginBtn.addActionListener(e -> connectToServer());
-        exitBtn.addActionListener(e -> System.exit(0));
+        gbc.gridy = 3; gbc.gridx = 0;
+        JLabel userLabel = new JLabel("Username:");
+        userLabel.setForeground(redText);
+        loginPanel.add(userLabel, gbc);
         
-        mainPanel.add(loginPanel, "LOGIN");
+        gbc.gridx = 1;
+        userField = new JTextField(15);
+        loginPanel.add(userField, gbc);
+        
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        buttonPanel.setBackground(pinkHue);
+        loginButton = new JButton("Login");
+        exitAppButton = new JButton("Exit");
+        buttonPanel.add(loginButton);
+        buttonPanel.add(exitAppButton);
+        
+        gbc.gridy = 4; gbc.gridx = 0; gbc.gridwidth = 2;
+        loginPanel.add(buttonPanel, gbc);
+        
+        loginButton.addActionListener(e -> connectToServer());
+        exitAppButton.addActionListener(e -> System.exit(0));
+        
+        cardPanel.add(loginPanel, "Login");
     }
 
     private void initChatPanel() {
-        JPanel chatPanel = new JPanel(new BorderLayout());
-        chatPanel.setBackground(pinkBackground);
-
+        JPanel chatPanel = new JPanel(new BorderLayout(10, 10));
+        chatPanel.setBackground(pinkHue);
+        chatPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
         chatArea = new JTextArea();
         chatArea.setEditable(false);
-        chatArea.setBackground(pinkBackground);
-        chatArea.setForeground(Color.BLACK);
-        
+        chatArea.setLineWrap(true);
         JScrollPane chatScroll = new JScrollPane(chatArea);
-        chatScroll.setBorder(BorderFactory.createTitledBorder("Chat Room"));
-        chatScroll.setBackground(pinkBackground);
-        chatScroll.getViewport().setBackground(pinkBackground);
-        chatPanel.add(chatScroll, BorderLayout.CENTER);
-
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.setBackground(pinkBackground);
+        
+        usersListModel = new DefaultListModel<>();
+        activeUsersList = new JList<>(usersListModel);
+        JScrollPane userScroll = new JScrollPane(activeUsersList);
+        userScroll.setPreferredSize(new Dimension(150, 0));
+        userScroll.setBorder(BorderFactory.createTitledBorder("Active Users"));
+        
+        JPanel bottomPanel = new JPanel(new BorderLayout(5, 0));
+        bottomPanel.setBackground(pinkHue);
         messageField = new JTextField();
+        sendButton = new JButton("Send");
+        leaveButton = new JButton("Leave Chat");
         
-        JPanel actionsPanel = new JPanel(new GridLayout(1, 2, 5, 0));
-        actionsPanel.setBackground(pinkBackground);
-        
-        sendBtn = new JButton("Send");
-        sendBtn.setForeground(Color.RED);
-        
-        leaveChatBtn = new JButton("Leave Chat");
-        leaveChatBtn.setForeground(Color.RED);
-        
-        actionsPanel.add(sendBtn);
-        actionsPanel.add(leaveChatBtn);
+        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        actionPanel.setBackground(pinkHue);
+        actionPanel.add(sendButton);
+        actionPanel.add(Box.createHorizontalStrut(5));
+        actionPanel.add(leaveButton);
         
         bottomPanel.add(messageField, BorderLayout.CENTER);
-        bottomPanel.add(actionsPanel, BorderLayout.EAST);
-        chatPanel.add(bottomPanel, BorderLayout.SOUTH);
-
-        usersModel = new DefaultListModel<>();
-        usersList = new JList<>(usersModel);
-        usersList.setBackground(pinkBackground);
-        usersList.setForeground(Color.RED); 
+        bottomPanel.add(actionPanel, BorderLayout.EAST);
         
-        JScrollPane userScroll = new JScrollPane(usersList);
-        userScroll.setPreferredSize(new Dimension(150, 0));
-        userScroll.setBorder(BorderFactory.createTitledBorder("Online Users"));
-        userScroll.setBackground(pinkBackground);
-        userScroll.getViewport().setBackground(pinkBackground);
+        chatPanel.add(chatScroll, BorderLayout.CENTER);
         chatPanel.add(userScroll, BorderLayout.EAST);
-
-        sendBtn.addActionListener(e -> sendMessage());
+        chatPanel.add(bottomPanel, BorderLayout.SOUTH);
+        
+        sendButton.addActionListener(e -> sendMessage());
         messageField.addActionListener(e -> sendMessage());
         
-        leaveChatBtn.addActionListener(e -> {
+        leaveButton.addActionListener(e -> {
+            intentionalLogout = true; 
+            
             if (out != null) {
                 out.println("LOGOUT|" + username);
             }
-            handleDisconnect();
+            
+            try {
+                if (socket != null && !socket.isClosed()) {
+                    socket.close();
+                }
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+            
+            chatArea.setText("");
+            cardLayout.show(cardPanel, "Login");
         });
-
-        mainPanel.add(chatPanel, "CHAT");
+        
+        cardPanel.add(chatPanel, "Chat");
     }
 
     private void connectToServer() {
         String ip = ipField.getText().trim();
         String portStr = portField.getText().trim();
-        username = usernameField.getText().trim();
-
-        if (username.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Username cannot be empty.");
+        username = userField.getText().trim();
+        
+        if (ip.isEmpty() || portStr.isEmpty() || username.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in all fields.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-
+        
         try {
             int port = Integer.parseInt(portStr);
             socket = new Socket(ip, port);
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
+            
+            intentionalLogout = false;
+            
             out.println("LOGIN|" + username);
-
-            cardLayout.show(mainPanel, "CHAT");
-            setTitle("Chat Client - " + username);
-
+            
             new Thread(new IncomingReader()).start();
-
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Could not connect to server: " + ex.getMessage());
+            cardLayout.show(cardPanel, "Chat");
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Could not connect to server.", "Connection Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void sendMessage() {
-        String msg = messageField.getText().trim();
-        if (!msg.isEmpty()) {
-            out.println("MESSAGE|" + username + "|" + msg);
+        String message = messageField.getText().trim();
+        if (!message.isEmpty() && out != null) {
+            out.println("MESSAGE|" + username + "|" + message);
             messageField.setText("");
         }
     }
 
     private void handleDisconnect() {
-        try {
-            if (socket != null && !socket.isClosed()) {
-                socket.close();
-            }
-        } catch (Exception e) {
-        }
         SwingUtilities.invokeLater(() -> {
-            usersModel.clear();
-            chatArea.setText("");
-            setTitle("Chat Client");
-            cardLayout.show(mainPanel, "LOGIN");
+            JOptionPane.showMessageDialog(this, "Disconnected from server.", "Connection Lost", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
         });
     }
 
@@ -205,48 +213,57 @@ public class ClientUI extends JFrame {
             try {
                 String line;
                 while ((line = in.readLine()) != null) {
-                    String[] parts = line.split("\\|");
-                    String command = parts[0];
-
-                    switch (command) {
-                        case "CHAT":
-                            chatArea.append(parts[1] + "\n");
-                            break;
-                        case "SYSTEM":
-                            chatArea.append("[SYSTEM] " + parts[1] + "\n");
-                            break;
-                        case "USERS":
-                            SwingUtilities.invokeLater(() -> {
-                                usersModel.clear();
-                                if (parts.length > 1) {
-                                    String[] names = parts[1].split(",");
-                                    for (String name : names) {
-                                        usersModel.addElement(name);
-                                    }
-                                }
-                            });
-                            break;
-                        case "KICK":
-                            String kickedUser = parts[1];
-                            if (kickedUser.equals(username)) {
-                                JOptionPane.showMessageDialog(ClientUI.this, "You have been kicked by the Admin.");
-                                handleDisconnect();
-                                return;
-                            } else {
-                                chatArea.append("[SYSTEM] " + kickedUser + " was kicked from the server.\n");
-                            }
-                            break;
-                    }
+                    final String response = line;
+                    SwingUtilities.invokeLater(() -> processResponse(response));
                 }
-            } catch (Exception e) {
-            } finally {
-                JOptionPane.showMessageDialog(ClientUI.this, "Connection to server lost. The application will now close.", "Server Error", JOptionPane.ERROR_MESSAGE);
-                System.exit(0);
+                
+                if (!intentionalLogout) {
+                    handleDisconnect();
+                }
+                
+            } catch (IOException e) {
+                if (!intentionalLogout) {
+                    handleDisconnect();
+                }
+            }
+        }
+        
+        private void processResponse(String response) {
+            String[] parts = response.split("\\|", 2);
+            String command = parts[0];
+            
+            switch (command) {
+                case "SYSTEM":
+                case "CHAT":
+                    chatArea.append(parts[1] + "\n");
+                    break;
+                case "USERS":
+                    usersListModel.clear();
+                    if (parts.length > 1 && !parts[1].isEmpty()) {
+                        String[] users = parts[1].split(",");
+                        for (String u : users) {
+                            usersListModel.addElement(u);
+                        }
+                    }
+                    break;
+                case "KICK":
+                    if (parts.length > 1) {
+                        String kickedUser = parts[1];
+                        if (kickedUser.equals(username)) {
+                            JOptionPane.showMessageDialog(ClientUI.this, "You have been kicked by the administrator.", "Kicked", JOptionPane.WARNING_MESSAGE);
+                            System.exit(0);
+                        } else {
+                            chatArea.append("[SYSTEM] User " + kickedUser + " was removed by the server.\n");
+                        }
+                    }
+                    break;
             }
         }
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(ClientUI::new);
+        SwingUtilities.invokeLater(() -> {
+            new ClientUI().setVisible(true);
+        });
     }
 }
