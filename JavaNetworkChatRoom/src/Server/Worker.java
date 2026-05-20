@@ -22,7 +22,7 @@ public class Worker implements Runnable {
                     break;
                 case "MESSAGE":
                     String chatMsg = parts[2];
-                    ServerUI.logMessage("Message from " + username + ": " + chatMsg);
+                    ServerUI.chatMessage(username + ": " + chatMsg);
                     ServerUI.broadcast("CHAT|" + username + ": " + chatMsg);
                     break;
                 case "LOGOUT":
