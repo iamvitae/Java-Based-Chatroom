@@ -21,6 +21,8 @@ public class ServerUI extends JFrame {
     private ServerSocket serverSocket;
     private boolean isRunning = false;
 
+    private final Color pinkHue = new Color(255, 220, 230);
+
     public ServerUI() {
         setTitle("Chat Server Admin");
         setSize(700, 500);
@@ -28,10 +30,16 @@ public class ServerUI extends JFrame {
         setLayout(new BorderLayout());
 
         JPanel topPanel = new JPanel();
+        topPanel.setBackground(pinkHue);
         portField = new JTextField("5000", 5); 
+        
         startBtn = new JButton("Start Server");
+        startBtn.setForeground(Color.RED);
+        
         stopBtn = new JButton("Stop Server");
+        stopBtn.setForeground(Color.RED);
         stopBtn.setEnabled(false);
+        
         topPanel.add(new JLabel("Port:"));
         topPanel.add(portField);
         topPanel.add(startBtn);
@@ -40,25 +48,42 @@ public class ServerUI extends JFrame {
 
         chatArea = new JTextArea();
         chatArea.setEditable(false);
+        chatArea.setBackground(pinkHue);
+        chatArea.setForeground(Color.BLACK);
         JScrollPane chatScroll = new JScrollPane(chatArea);
         chatScroll.setBorder(BorderFactory.createTitledBorder("Chat Messages Area"));
+        chatScroll.setBackground(pinkHue);
+        chatScroll.getViewport().setBackground(pinkHue);
 
         logArea = new JTextArea();
         logArea.setEditable(false);
+        logArea.setBackground(pinkHue);
+        logArea.setForeground(Color.BLACK);
         JScrollPane logScroll = new JScrollPane(logArea);
         logScroll.setBorder(BorderFactory.createTitledBorder("Server Log Area"));
+        logScroll.setBackground(pinkHue);
+        logScroll.getViewport().setBackground(pinkHue);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, chatScroll, logScroll);
         splitPane.setResizeWeight(0.5);
         add(splitPane, BorderLayout.CENTER);
 
         JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.setBackground(pinkHue);
         usersModel = new DefaultListModel<>();
+        
         JList<String> userList = new JList<>(usersModel);
+        userList.setBackground(pinkHue);
+        userList.setForeground(Color.RED);
+        
         JScrollPane userScroll = new JScrollPane(userList);
         userScroll.setBorder(BorderFactory.createTitledBorder("Active Users"));
+        userScroll.setBackground(pinkHue);
+        userScroll.getViewport().setBackground(pinkHue);
         
         kickBtn = new JButton("Kick Selected User");
+        kickBtn.setForeground(Color.RED);
+        
         rightPanel.add(userScroll, BorderLayout.CENTER);
         rightPanel.add(kickBtn, BorderLayout.SOUTH);
         rightPanel.setPreferredSize(new Dimension(170, 0));

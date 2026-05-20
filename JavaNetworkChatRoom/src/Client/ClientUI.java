@@ -28,6 +28,8 @@ public class ClientUI extends JFrame {
     private PrintWriter out;
     private BufferedReader in;
     private String username;
+    
+    private final Color pinkBackground = new Color(255, 220, 230);
 
     public ClientUI() {
         setTitle("Chat Client");
@@ -36,6 +38,7 @@ public class ClientUI extends JFrame {
 
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
+        mainPanel.setBackground(pinkBackground);
 
         initLoginPanel();
         initChatPanel();
@@ -47,6 +50,7 @@ public class ClientUI extends JFrame {
 
     private void initLoginPanel() {
         JPanel loginPanel = new JPanel(new GridBagLayout());
+        loginPanel.setBackground(pinkBackground);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -54,8 +58,12 @@ public class ClientUI extends JFrame {
         ipField = new JTextField("localhost", 15);
         portField = new JTextField("5000", 5);
         usernameField = new JTextField(15);
+        
         loginBtn = new JButton("Login");
+        loginBtn.setForeground(Color.RED);
+        
         exitBtn = new JButton("Exit");
+        exitBtn.setForeground(Color.RED);
 
         gbc.gridx = 0; gbc.gridy = 0; loginPanel.add(new JLabel("Server IP:"), gbc);
         gbc.gridx = 1; loginPanel.add(ipField, gbc);
@@ -67,6 +75,7 @@ public class ClientUI extends JFrame {
         gbc.gridx = 1; loginPanel.add(usernameField, gbc);
 
         JPanel btnPanel = new JPanel(new GridLayout(1, 2, 5, 0));
+        btnPanel.setBackground(pinkBackground);
         btnPanel.add(loginBtn);
         btnPanel.add(exitBtn);
 
@@ -81,19 +90,32 @@ public class ClientUI extends JFrame {
 
     private void initChatPanel() {
         JPanel chatPanel = new JPanel(new BorderLayout());
+        chatPanel.setBackground(pinkBackground);
 
         chatArea = new JTextArea();
         chatArea.setEditable(false);
+        chatArea.setBackground(pinkBackground);
+        chatArea.setForeground(Color.BLACK);
+        
         JScrollPane chatScroll = new JScrollPane(chatArea);
         chatScroll.setBorder(BorderFactory.createTitledBorder("Chat Room"));
+        chatScroll.setBackground(pinkBackground);
+        chatScroll.getViewport().setBackground(pinkBackground);
         chatPanel.add(chatScroll, BorderLayout.CENTER);
 
         JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.setBackground(pinkBackground);
         messageField = new JTextField();
         
         JPanel actionsPanel = new JPanel(new GridLayout(1, 2, 5, 0));
+        actionsPanel.setBackground(pinkBackground);
+        
         sendBtn = new JButton("Send");
+        sendBtn.setForeground(Color.RED);
+        
         leaveChatBtn = new JButton("Leave Chat");
+        leaveChatBtn.setForeground(Color.RED);
+        
         actionsPanel.add(sendBtn);
         actionsPanel.add(leaveChatBtn);
         
@@ -103,9 +125,14 @@ public class ClientUI extends JFrame {
 
         usersModel = new DefaultListModel<>();
         usersList = new JList<>(usersModel);
+        usersList.setBackground(pinkBackground);
+        usersList.setForeground(Color.RED); 
+        
         JScrollPane userScroll = new JScrollPane(usersList);
         userScroll.setPreferredSize(new Dimension(150, 0));
         userScroll.setBorder(BorderFactory.createTitledBorder("Online Users"));
+        userScroll.setBackground(pinkBackground);
+        userScroll.getViewport().setBackground(pinkBackground);
         chatPanel.add(userScroll, BorderLayout.EAST);
 
         sendBtn.addActionListener(e -> sendMessage());
